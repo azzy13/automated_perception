@@ -1,0 +1,19 @@
+name: darpa_tracking
+channels:
+  - conda-forge
+  - nvidia
+  - pytorch
+dependencies:
+  - python=3.10
+  - pytorch 
+  - torchvision 
+  - torchaudio
+  - pytorch-cuda=12.4
+  - lightning
+  - numpy
+  - pandas
+  - pip
+  - pip:
+    - tensorboard
+    - tensorboardX
+    - pillow
