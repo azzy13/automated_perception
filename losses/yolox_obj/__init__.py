@@ -13,7 +13,6 @@ class Loss(nn.Module):
     def __init__(self, loss_cfg):
         super().__init__()
         self.loss_cfg = loss_cfg
-        self.use_l1 = False
         self.num_classes = 1
         self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
 

@@ -105,7 +105,6 @@ class Loss(nn.Module):
 
         num_fg = 0.0
         num_gts = 0.0
-        print("OUTPUTS", outputs.shape[0])
         for batch_idx in range(outputs.shape[0]):
             num_gt = int(nlabel[batch_idx])
             num_gts += num_gt
