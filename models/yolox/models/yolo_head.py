@@ -48,7 +48,8 @@ class YOLOXHead(nn.Module):
         in_channels=[256, 512, 1024],
         act="silu",
         depthwise=False,
-        training=True
+        training=True,
+        use_l1=False,
     ):
         """
         Args:
@@ -147,7 +148,7 @@ class YOLOXHead(nn.Module):
                 )
             )
 
-        self.use_l1 = False
+        self.use_l1 = use_l1
         self.l1_loss = nn.L1Loss(reduction="none")
         self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
         self.iou_loss = IOUloss(reduction="none")
@@ -182,8 +183,6 @@ class YOLOXHead(nn.Module):
 
             cls_feat = cls_conv(cls_x)
             cls_output = self.cls_preds[k](cls_feat)
-            print(self.cls_preds[k], self.cls_preds[k].weight.shape, self.cls_preds[k].bias.shape)
-            print(self.n_anchors, "CLS_FEAT", cls_feat.shape, "cls_x", cls_x.shape, "cls_output", cls_output.shape)
 
             reg_feat = reg_conv(reg_x)
             reg_output = self.reg_preds[k](reg_feat)
@@ -220,7 +219,6 @@ class YOLOXHead(nn.Module):
             outputs.append(output)
 
         if self.performing_training:
-            print("X_shifts", len(x_shifts), "Y_shjfts", len(y_shifts), "Expanded", len(expanded_strides), "Labels", labels.shape, "Outputs" ,torch.cat(outputs, 1).shape, "Origin", len(origin_preds), xin[0].dtype)
             return (imgs, x_shifts, y_shifts, expanded_strides, labels, torch.cat(outputs, 1), origin_preds, xin[0].dtype)
         else:
             self.hw = [x.shape[-2:] for x in outputs]

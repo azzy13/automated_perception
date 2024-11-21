@@ -57,7 +57,7 @@ class Loss(nn.Module):
     def __init__(self, loss_cfg):
         super().__init__()
         self.loss_cfg = loss_cfg
-        self.num_classes = 1
+        self.num_classes = loss_cfg["num_classes"]
         self.iou_loss = IOUloss(reduction="none")
 
     def forward(self, y, y_hat):

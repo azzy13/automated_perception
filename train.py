@@ -25,15 +25,35 @@ model = main.Tracker(
     hyperparams={"lr": 0.001},
 )
 '''
+
+use_l1 = True
+num_classes = 1
+
 model = main.Tracker(
     model_selection="yolox",
     model_params={
-        "training": True
+        "training": True,
+        "use_l1": use_l1,
+        "num_classes": num_classes,
     },
     losses={
-        "yolox": {},
-        "yolox_cls": {},
-        "yolox_obj": {},
+        "yolox": {
+            "use_l1": use_l1,
+            "num_classes": num_classes,
+        },
+        "yolox": {
+            "use_l1": use_l1,
+            "num_classes": num_classes,
+        },
+        "yolox_cls": {
+            "num_classes": num_classes,
+        },
+        "yolox_obj": {
+            "num_classes": num_classes,
+        },
+        "yolox_iou": {
+            "num_classes": num_classes,
+        },
     },
     loss_training="yolox",
     hyperparams={"lr": 0.001},

@@ -57,8 +57,8 @@ class Loss(nn.Module):
     def __init__(self, loss_cfg):
         super().__init__()
         self.loss_cfg = loss_cfg
-        self.use_l1 = False
-        self.num_classes = 1
+        self.use_l1 = loss_cfg["use_l1"]
+        self.num_classes = loss_cfg["num_classes"]
         self.l1_loss = nn.L1Loss(reduction="none")
         self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
         self.iou_loss = IOUloss(reduction="none")

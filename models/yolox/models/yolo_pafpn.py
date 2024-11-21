@@ -23,7 +23,6 @@ class YOLOPAFPN(nn.Module):
         act="silu",
     ):
         super().__init__()
-        print("pafpn", depth, width, in_features, in_channels, depthwise, act)
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
         self.in_channels = in_channels

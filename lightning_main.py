@@ -36,7 +36,6 @@ class Tracker(L.LightningModule):
         x, y, info, id = batch
         y = y[:, :, :5]
         y_hat = self(x, y)
-        print(x.shape, y.shape)
         loss = self.compute_losses(y, y_hat)
         return loss
     

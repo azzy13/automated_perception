@@ -8,7 +8,7 @@ class Loss(nn.Module):
         super().__init__()
         self.loss_cfg = loss_cfg
         self.l1_loss = nn.L1Loss(reduction="none")
-        self.num_classes = 1
+        self.num_classes = loss_cfg["num_classes"]
 
     def forward(self, y, y_hat):
         return self.get_losses(y, *y_hat)
