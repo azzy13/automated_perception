@@ -59,8 +59,6 @@ class Loss(nn.Module):
         self.loss_cfg = loss_cfg
         self.use_l1 = False
         self.num_classes = 1
-        self.l1_loss = nn.L1Loss(reduction="none")
-        self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
         self.iou_loss = IOUloss(reduction="none")
 
     def forward(self, y, y_hat):
