@@ -1,6 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from .. import yolox_utils as yolox_utils
 
 class IOUloss(nn.Module):
@@ -48,26 +53,31 @@ class IOUloss(nn.Module):
 
         return loss
 
-
 class Loss(nn.Module):
     def __init__(self, loss_cfg):
         super().__init__()
         self.loss_cfg = loss_cfg
-        self.iou_loss = IOUloss(reduction="none")
+        self.use_l1 = False
         self.num_classes = 1
+        self.l1_loss = nn.L1Loss(reduction="none")
+        self.bcewithlog_loss = nn.BCEWithLogitsLoss(reduction="none")
+        self.iou_loss = IOUloss(reduction="none")
 
     def forward(self, y, y_hat):
         return self.get_losses(y, *y_hat)
     
-    def get_losses(self, y,
-            imgs,
-            x_shifts,
-            y_shifts,
-            expanded_strides,
-            labels,
-            outputs,
-            origin_preds,
-            dtype):
+    def get_losses(
+        self,
+        y,
+        imgs,
+        x_shifts,
+        y_shifts,
+        expanded_strides,
+        labels,
+        outputs,
+        origin_preds,
+        dtype,
+    ):
         bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
         obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
         cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
@@ -85,11 +95,11 @@ class Loss(nn.Module):
         y_shifts = torch.cat(y_shifts, 1)  # [1, n_anchors_all]
         expanded_strides = torch.cat(expanded_strides, 1)
 
-        fg_masks = []
         reg_targets = []
+        fg_masks = []
+
         num_fg = 0.0
         num_gts = 0.0
-
         for batch_idx in range(outputs.shape[0]):
             num_gt = int(nlabel[batch_idx])
             num_gts += num_gt
@@ -100,22 +110,43 @@ class Loss(nn.Module):
                 gt_bboxes_per_image = labels[batch_idx, :num_gt, 1:5]
                 gt_classes = labels[batch_idx, :num_gt, 0]
                 bboxes_preds_per_image = bbox_preds[batch_idx]
-                (gt_matched_classes, fg_mask, pred_ious_this_matching, matched_gt_inds, num_fg_img) = yolox_utils.get_assignments(self.num_classes, batch_idx, num_gt, total_num_anchors, gt_bboxes_per_image, gt_classes,
-                bboxes_preds_per_image, expanded_strides, x_shifts, y_shifts,
-                cls_preds, bbox_preds, obj_preds, labels, imgs)
+                
+                (gt_matched_classes, fg_mask, pred_ious_this_matching, matched_gt_inds, num_fg_img,) = yolox_utils.get_assignments(
+                    self.num_classes,  # noqa
+                    batch_idx,
+                    num_gt,
+                    total_num_anchors,
+                    gt_bboxes_per_image,
+                    gt_classes,
+                    bboxes_preds_per_image,
+                    expanded_strides,
+                    x_shifts,
+                    y_shifts,
+                    cls_preds,
+                    bbox_preds,
+                    obj_preds,
+                    labels,
+                    imgs,
+                )
+
+                
+                torch.cuda.empty_cache()
+                num_fg += num_fg_img
+
                 reg_target = gt_bboxes_per_image[matched_gt_inds]
 
             reg_targets.append(reg_target)
             fg_masks.append(fg_mask)
-            
 
-        fg_masks = torch.cat(fg_masks, 0)
         reg_targets = torch.cat(reg_targets, 0)
-        num_fg = max(num_fg, 1)
+        fg_masks = torch.cat(fg_masks, 0)
 
+        num_fg = max(num_fg, 1)
         loss_iou = (
             self.iou_loss(bbox_preds.view(-1, 4)[fg_masks], reg_targets)
         ).sum() / num_fg
-        return loss_iou
 
-    
+        reg_weight = 5.0
+        loss = reg_weight * loss_iou
+
+        return loss
