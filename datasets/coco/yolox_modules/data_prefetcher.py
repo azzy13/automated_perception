@@ -5,7 +5,7 @@
 import torch
 import torch.distributed as dist
 
-from yolox.utils import synchronize
+from .utils import synchronize
 
 import random
 

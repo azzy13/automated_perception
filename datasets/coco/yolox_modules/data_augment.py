@@ -14,7 +14,7 @@ import numpy as np
 
 import torch
 
-from yolox.utils import xyxy2cxcywh
+from .utils import xyxy2cxcywh
 
 import math
 import random

@@ -4,10 +4,7 @@ from pycocotools.coco import COCO
 
 import os
 
-from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset
-from loguru import logger
-
 
 class CarlaDataset(Dataset):
     """
@@ -33,8 +30,6 @@ class CarlaDataset(Dataset):
             preproc: data augmentation strategy
         """
         super().__init__(img_size)
-        if data_dir is None:
-            data_dir = os.path.join(get_yolox_datadir(), path)
         self.data_dir = data_dir
         self.json_file = json_file
 

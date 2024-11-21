@@ -19,37 +19,48 @@ class Tracker(L.LightningModule):
         self.loss_training = loss_training
         self.lr = hyperparams["lr"]
 
-    def compute_losses(self, y_hat, y):
+    def compute_losses(self, y, y_hat):
         computed_losses = {}
         for loss in self.loss_list:
-            computed_loss = self.loss_list[loss](y_hat, y)
+            computed_loss = self.loss_list[loss](y, y_hat)
             computed_losses[loss] = computed_loss
             self.log(loss, computed_loss)
         return computed_losses[self.loss_training]
+    
+    def forward(self, x, labels):
+        return self.model(x, labels)
 
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
-        x, y = batch
-
-        loss = self.compute_losses(y_hat, y)
+        x, y, info, id = batch
+        y = y[:, :, :5]
+        y_hat = self(x, y)
+        print(x.shape, y.shape)
+        loss = self.compute_losses(y, y_hat)
         return loss
     
+    '''
     def validation_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
-        x, y = batch
-
-        loss = self.compute_losses(y_hat, y)
+        x, y, info, id = batch
+        print(x.shape, y.shape)
+        y = y[:, :, :5]
+        print(x.shape, y.shape)
+        y_hat = self(x, y)
+        loss = self.compute_losses(y, y_hat)
         return loss
     
     def test_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
-        x, y = batch
-
-        loss = self.compute_losses(y_hat, y)
+        x, y, info, id = batch
+        y = y[:, :, :5]
+        y_hat = self(x, y)
+        loss = self.compute_losses(y, y_hat)
         return loss
+    '''
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)

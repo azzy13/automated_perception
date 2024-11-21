@@ -2,6 +2,7 @@
 import os
 import random
 import torch
+import torch.utils.data
 import torch.nn as nn
 import torch.distributed as dist
 
@@ -63,11 +64,7 @@ class CocoDataset():
         self.path = "coco"
 
     def get_train_dataset(self, no_aug=False):
-        from yolox_modules import (
-            CarlaDataset,
-            TrainTransform,
-            MosaicDetection,
-        )
+        from .yolox_modules import CarlaDataset, TrainTransform, MosaicDetection
 
         dataset = CarlaDataset(
             data_dir=os.path.dirname(__file__),
@@ -100,11 +97,11 @@ class CocoDataset():
 
         self.dataset = dataset
 
-        return dataset
+        return torch.utils.data.DataLoader(dataset, batch_size=2)
 
 
-    def get_val_dataset(self, batch_size, is_distributed, testdev=False):
-        from yolox_modules import CarlaDataset, ValTransform
+    def get_val_dataset(self):
+        from .yolox_modules import CarlaDataset, ValTransform
 
         valdataset = CarlaDataset(
             data_dir=os.path.dirname(__file__),
@@ -117,5 +114,4 @@ class CocoDataset():
             ),
         )
 
-        
-        return valdataset
+        return torch.utils.data.DataLoader(valdataset, batch_size=2)

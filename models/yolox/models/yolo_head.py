@@ -42,12 +42,13 @@ def bboxes_iou(bboxes_a, bboxes_b, xyxy=True):
 class YOLOXHead(nn.Module):
     def __init__(
         self,
-        num_classes,
-        width=1.0,
+        num_classes=1,
+        width=1.25,
         strides=[8, 16, 32],
         in_channels=[256, 512, 1024],
         act="silu",
         depthwise=False,
+        training=True
     ):
         """
         Args:
@@ -55,10 +56,10 @@ class YOLOXHead(nn.Module):
             depthwise (bool): wheather apply depthwise conv in conv branch. Defalut value: False.
         """
         super().__init__()
-
         self.n_anchors = 1
         self.num_classes = num_classes
         self.decode_in_inference = True  # for deploy, set to False
+        self.performing_training = training
 
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
@@ -181,12 +182,14 @@ class YOLOXHead(nn.Module):
 
             cls_feat = cls_conv(cls_x)
             cls_output = self.cls_preds[k](cls_feat)
+            print(self.cls_preds[k], self.cls_preds[k].weight.shape, self.cls_preds[k].bias.shape)
+            print(self.n_anchors, "CLS_FEAT", cls_feat.shape, "cls_x", cls_x.shape, "cls_output", cls_output.shape)
 
             reg_feat = reg_conv(reg_x)
             reg_output = self.reg_preds[k](reg_feat)
             obj_output = self.obj_preds[k](reg_feat)
 
-            if self.training:
+            if self.performing_training:
                 output = torch.cat([reg_output, obj_output, cls_output], 1)
                 output, grid = self.get_output_and_grid(
                     output, k, stride_this_level, xin[0].type()
@@ -216,8 +219,9 @@ class YOLOXHead(nn.Module):
 
             outputs.append(output)
 
-        if self.training:
-            return imgs, x_shifts, y_shifts, expanded_strides, labels, torch.cat(outputs, 1), origin_preds, xin[0].dtype
+        if self.performing_training:
+            print("X_shifts", len(x_shifts), "Y_shjfts", len(y_shifts), "Expanded", len(expanded_strides), "Labels", labels.shape, "Outputs" ,torch.cat(outputs, 1).shape, "Origin", len(origin_preds), xin[0].dtype)
+            return (imgs, x_shifts, y_shifts, expanded_strides, labels, torch.cat(outputs, 1), origin_preds, xin[0].dtype)
         else:
             self.hw = [x.shape[-2:] for x in outputs]
             # [batch, n_anchors_all, 85]

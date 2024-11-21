@@ -20,11 +20,11 @@ class YOLOX(nn.Module):
         if backbone is None:
             backbone = YOLOPAFPN()
         if head is None:
-            head = YOLOXHead(80)
+            head = YOLOXHead(training=training)
         
         self.backbone = backbone
         self.head = head
-        self.training = training
+        self.performing_training = training
 
     def forward(self, x, targets=None):
         # fpn output content features of [dark3, dark4, dark5]

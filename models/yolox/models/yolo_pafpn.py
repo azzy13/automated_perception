@@ -8,7 +8,6 @@ import torch.nn as nn
 from .darknet import CSPDarknet
 from .network_blocks import BaseConv, CSPLayer, DWConv
 
-
 class YOLOPAFPN(nn.Module):
     """
     YOLOv3 model. Darknet 53 is the default backbone of this model.
@@ -16,14 +15,15 @@ class YOLOPAFPN(nn.Module):
 
     def __init__(
         self,
-        depth=1.0,
-        width=1.0,
+        depth=1.33,
+        width=1.25,
         in_features=("dark3", "dark4", "dark5"),
         in_channels=[256, 512, 1024],
         depthwise=False,
         act="silu",
     ):
         super().__init__()
+        print("pafpn", depth, width, in_features, in_channels, depthwise, act)
         self.backbone = CSPDarknet(depth, width, depthwise=depthwise, act=act)
         self.in_features = in_features
         self.in_channels = in_channels

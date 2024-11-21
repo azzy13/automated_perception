@@ -28,7 +28,7 @@ def bboxes_iou(bboxes_a, bboxes_b, xyxy=True):
 
 @_torch.no_grad()
 def get_assignments(
-    self,
+    num_classes,
     batch_idx,
     num_gt,
     total_num_anchors,
@@ -56,7 +56,7 @@ def get_assignments(
         y_shifts = y_shifts.cpu()
 
     img_size = imgs.shape[2:]
-    fg_mask, is_in_boxes_and_center = self.get_in_boxes_info(
+    fg_mask, is_in_boxes_and_center = get_in_boxes_info(
         gt_bboxes_per_image,
         expanded_strides,
         x_shifts,
@@ -78,7 +78,7 @@ def get_assignments(
     pair_wise_ious = bboxes_iou(gt_bboxes_per_image, bboxes_preds_per_image, False)
         
     gt_cls_per_image = (
-        _F.one_hot(gt_classes.to(_torch.int64), self.num_classes)
+        _F.one_hot(gt_classes.to(_torch.int64), num_classes)
         .float()
         .unsqueeze(1)
         .repeat(1, num_in_boxes_anchor, 1)
@@ -104,7 +104,7 @@ def get_assignments(
         + 100000.0 * (~is_in_boxes_and_center)
     )
 
-    (num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds, ) = self.dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask)
+    (num_fg, gt_matched_classes, pred_ious_this_matching, matched_gt_inds, ) = dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask)
     del pair_wise_cls_loss, cost, pair_wise_ious, pair_wise_ious_loss
 
     if mode == "cpu":
@@ -116,7 +116,6 @@ def get_assignments(
     return (gt_matched_classes, fg_mask, pred_ious_this_matching, matched_gt_inds, num_fg,)
     
 def get_in_boxes_info(
-    self,
     gt_bboxes_per_image,
     expanded_strides,
     x_shifts,
@@ -206,7 +205,7 @@ def get_in_boxes_info(
     del gt_bboxes_per_image_clip
     return is_in_boxes_anchor, is_in_boxes_and_center
 
-def dynamic_k_matching(self, cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
+def dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
     # Dynamic K
     # ---------------------------------------------------------------
     matching_matrix = _torch.zeros_like(cost)
